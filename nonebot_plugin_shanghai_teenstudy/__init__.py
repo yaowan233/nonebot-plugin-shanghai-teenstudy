@@ -1,14 +1,13 @@
-import asyncio
 import json
 import os
 from nonebot import get_driver
 from nonebot.permission import SUPERUSER
 from nonebot.plugin import on_command
-from nonebot.adapters.onebot.v11 import MessageSegment, PrivateMessageEvent, Message
+from nonebot.adapters.onebot.v11 import PrivateMessageEvent, Message
 from nonebot.params import CommandArg
 from .dxx_sh import auto_sh
-from .get_src import get_pic
 from .config import Config
+from nonebot_plugin_apscheduler import scheduler
 
 
 global_config = get_driver().config
@@ -30,27 +29,7 @@ async def _(event: PrivateMessageEvent):
         obj = json.load(f)
     for item in obj:
         if int(send_id) == int(item['qq']):
-            content = await auto_sh(send_id)
-            status = content['status']
-            if status != 200:
-                message = '提交失败！'
-                await dxx.finish(message=message, at_sender=True)
-
-            img = await get_pic()
-            end = img['end']
-            area = item['area']
-            name = item['name']
-            danwei1 = item['danwei1']
-            danwei2 = item['danwei2']
-            danwei3 = item['danwei3']
-            title = content['title']
-            message = f'大学习{title}提交成功!\n用户信息\n姓名：{name}\nQQ号:{send_id}\n地区：{area}\nopenid:{openid}\n' \
-                      f'学校：{danwei1}\n学院：{danwei2}\n班级(团支部)：{danwei3}'
-            await dxx.send(message, at_sender=True)
-            await asyncio.sleep(1)
-            c = "你也可以点击链接进行截图以获取带手机状态栏的完成截图\nhttps://qndxx.scubot.live/\n如果QQ不能直接打开请复制到微信打开！"
-            await dxx.finish(MessageSegment.text('完成截图\n') + MessageSegment.image(end) + MessageSegment.text(c),
-                             at_sender=True)
+            await auto_sh(send_id)
     message = '用户数据不存在，请先配置用户文件！'
     await dxx.finish(message, at_sender=True)
 
@@ -143,3 +122,12 @@ dxx_help = on_command('大学习帮助', priority=5)
 async def _():
     message = '1、提交大学习\n2、大学习帮助\n3、设置大学习\n指令格式：设置大学习 姓名 学校 团委(学院) 团支部(班级)\n4、删除大学习'
     await dxx_help.finish(message)
+
+
+@scheduler.scheduled_job("cron", day_of_week='mon', hour=18)
+async def _():
+    with open(path + '/dxx_list.json', 'r', encoding='utf-8') as f:
+        obj = json.load(f)
+    for item in obj:
+        qq = item['qq']
+        await auto_sh(qq)
