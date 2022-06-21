@@ -1,4 +1,4 @@
-# nonebot_plugin_shanghai_teenstudy
+# nonebot-plugin-shanghai-teenstudy
 nonebot2 青年大学习插件（上海地区）
 
 上海青年大学习需要抓包获取openid
